@@ -1,36 +1,38 @@
 pipeline {
+
     agent any
 
     stages {
-        stage('Build') {
+       
+        stage('Build and Test in Docker') {
             agent {
-                dockerfile { filename 'Dockerfile.build' } 
+                
+                docker { image 'python:3.9-slim' }
             }
             steps {
-                echo "--- Inspecionando a sintaxe do código Python ---"
-                sh 'python -m py_compile src/conversor.py'
-            }
-        }
+                
+                echo 'Checking out code...'
+                checkout scm
 
-        stage('Test') {
-            agent {
-                dockerfile { filename 'Dockerfile.test' } 
-            }
-            steps {
-                echo "--- Executando testes com Pytest ---"
-                sh 'pytest --junitxml=report.xml tests/' // Gera um relatório que o Jenkins entende
-            }
-            post {
-                always {
-                    junit 'report.xml'
-                }
+                
+                echo 'Installing dependencies...'
+                sh 'python -m venv venv'
+                sh '. venv/bin/activate && pip install -r requirements.txt'
+
+                
+                echo 'Running tests...'
+                sh '. venv/bin/activate && pytest --junitxml=reports/results.xml tests/'
             }
         }
     }
+    
     post {
         always {
-            echo "Pipeline finalizada. Limpando o workspace."
-            cleanWs() 
+            echo 'Publishing test results...'
+           
+            junit 'reports/results.xml'
+            
+            cleanWs()
         }
     }
 }
