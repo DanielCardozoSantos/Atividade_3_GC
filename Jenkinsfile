@@ -1,36 +1,32 @@
 pipeline {
-    agent any
+    agent any // O pipeline principal roda no agente do Jenkins
 
     stages {
         stage('Build') {
             agent {
-                dockerfile { filename 'Dockerfile.build' } 
+                docker { image 'python:3.9-slim' }
             }
             steps {
-                echo "--- Inspecionando a sintaxe do código Python ---"
-                sh 'python -m py_compile src/conversor.py'
+                echo 'Iniciando o stage de Build...'
+                sh 'python -m venv venv'
+                sh 'venv/bin/pip install -r requirements.txt'
+                echo 'Dependências instaladas.'
             }
         }
-
         stage('Test') {
             agent {
-                dockerfile { filename 'Dockerfile.test' } 
+                docker { image 'python:3.9-slim' }
             }
             steps {
-                echo "--- Executando testes com Pytest ---"
-                sh 'pytest --junitxml=report.xml tests/' // Gera um relatório que o Jenkins entende
+                echo 'Iniciando o stage de Teste...'
+                sh 'venv/bin/pip install -r requirements.txt' // Instala dependências de novo no container de teste
+                sh 'venv/bin/pytest --junitxml=test-reports/results.xml tests/test_conversor.py'
             }
             post {
                 always {
-                    junit 'report.xml'
+                    junit 'test-reports/results.xml'
                 }
             }
-        }
-    }
-    post {
-        always {
-            echo "Pipeline finalizada. Limpando o workspace."
-            cleanWs() 
         }
     }
 }
