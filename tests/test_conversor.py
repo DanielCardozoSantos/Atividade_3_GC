@@ -1,8 +1,9 @@
 import sys
 import os
-from conversor import fahrenheit_para_celsius, celsius_para_fahrenheit
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+from conversor import fahrenheit_para_celsius, celsius_para_fahrenheit
+
 
 def test_f_para_c_ponto_congelamento():
     #Testa a conversão de 32°F para 0°C
